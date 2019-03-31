@@ -11,13 +11,13 @@ import java.util.List;
  */
 public class QuickSort {
 
-	public static <T> void swap(List<T> list, int i, int j) {
+	private static <T> void swap(List<T> list, int i, int j) {
 		T cache = list.get(j);
 		list.set(j, list.get(i));
 		list.set(i, cache);
 	}
 	
-	public static <T> void sort0(List<T> list, int start, int end, Comparator<T> ctor) {
+	private static <T> void sort0(List<T> list, int start, int end, Comparator<T> ctor) {
 		if (start >= end) return;
 		int left = start, right = end;
 		while (left < right) {

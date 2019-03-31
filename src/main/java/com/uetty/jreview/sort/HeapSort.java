@@ -11,13 +11,12 @@ import java.util.List;
  */
 public class HeapSort {
 
-	public static <T> void swap(List<T> list, int i, int j) {
+	private static <T> void swap(List<T> list, int i, int j) {
 		T cache = list.get(j);
 		list.set(j, list.get(i));
 		list.set(i, cache);
 	}
-	
-	public static <T> void adjustHeap(List<T> list, int pos, int maxPos, Comparator<T> ctor) {
+	private static <T> void adjustHeap(List<T> list, int pos, int maxPos, Comparator<T> ctor) {
 		if (2 * pos + 1 > maxPos) return;
 		int leftChildPos = 2 * pos + 1;
 		int rightChildPos = 2 * pos + 2;
@@ -36,7 +35,7 @@ public class HeapSort {
 		}
 	}
 	
-	public static <T> void buildBigHeap(List<T> list, Comparator<T> ctor) {
+	private static <T> void buildBigHeap(List<T> list, Comparator<T> ctor) {
 		for (int i = list.size() / 2 - 1; i >= 0; i--) {
 			adjustHeap(list, i, list.size() - 1, ctor);
 		}

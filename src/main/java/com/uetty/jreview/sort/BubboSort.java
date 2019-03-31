@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class BubboSort {
 
-	public static <T> void swap(List<T> list, int i, int j) {
+	private static <T> void swap(List<T> list, int i, int j) {
 		T cache = list.get(j);
 		list.set(j, list.get(i));
 		list.set(i, cache);
