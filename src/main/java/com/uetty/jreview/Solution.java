@@ -1,7 +1,5 @@
 package com.uetty.jreview;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,23 +8,22 @@ import java.util.Set;
 
 public class Solution {
 
-    /**
-     * 进化
-     */
-    static void derivation(Set<Integer>[][] distMap, int[][] corridor, int[][] queries) {
+    
+	static int[] derivation(Set<Integer>[][] distMap, int[][] corridor, int[][] queries) {
         boolean changed = false;
-        boolean[] colChanged = null;
-        boolean[] colComplete = new boolean[queries.length];
+        boolean[] colChanged = new boolean[queries.length];
+        int[] result = new int[queries.length];
         do {
             changed = false;
-            colChanged = new boolean[queries.length];
+            for (int j = 0; j < colChanged.length; j++) colChanged[j] = false;
+
             for (int i = 0; i < corridor.length; i++) {
                 int[] distPair = corridor[i];
                 int from = distPair[0];
                 int to = distPair[1];
 
                 for (int j = 0; j < queries.length; j++) {
-                    if (colComplete[j]) continue;
+                    if (distMap[j] == null) continue;
                     if (distMap[j][from - 1] == null
                         || distMap[j][from - 1].size() == 0) continue;
                     
@@ -48,19 +45,28 @@ public class Solution {
             }
             
             for (int j = 0; j < queries.length; j++) {
-                if (colComplete[j]) continue;
+                if (distMap[j] == null) continue;
                 if (distMap[j][queries[j][1] - 1] != null
-                		&& distMap[j][queries[j][1] - 1].contains(queries[j][2] - 1)) {
-                    colComplete[j] = true;
+                    && distMap[j][queries[j][1] - 1].contains(queries[j][2] - 1)) {
+                    result[j] = queries[j][2] - 1;
+                    distMap[j] = null;
                     continue;
                 }
                 if (!colChanged[j]) {
-                    colComplete[j] = true;
+                    Iterator<Integer> ritr = distMap[j][queries[j][1] - 1].iterator();;
+                    int maxMod = 0;
+                    while (ritr.hasNext()) {
+                        int mod = ritr.next();
+                        maxMod = mod > maxMod ? mod : maxMod;
+                    }
+                    result[j] = maxMod;
+                    distMap[j] = null;
                     continue;
                 }
             }
 
         } while (changed);
+        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -74,17 +80,9 @@ public class Solution {
             distMap[j][from - 1] = set;
         }
 
-        derivation(distMap, corridor, queries);
+        int[] maxMods = derivation(distMap, corridor, queries);
 
-        int[] maxMods = new int[queries.length];
-        for (int j = 0; j < distMap.length; j++) {
-            Iterator<Integer> itr = distMap[j][queries[j][1] - 1].iterator();
-            while (itr.hasNext()) {
-                int mod = itr.next() % queries[j][2];
-                mod = mod < 0 ? mod + queries[j][2] : mod;
-                if (mod > maxMods[j]) maxMods[j] = mod;
-            }
-        }
+        
 
         return maxMods;
     }
