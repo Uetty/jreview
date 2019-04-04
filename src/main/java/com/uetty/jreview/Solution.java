@@ -1,67 +1,92 @@
 package com.uetty.jreview;
-import java.io.*;
-import java.math.*;
-import java.text.*;
-import java.util.*;
-import java.util.regex.*;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Scanner;
+import java.util.Set;
 
 public class Solution {
 
     /**
      * 进化
      */
-    static void derivation(List<Set<Long>> distMap, int[][] corridor, int toIndex, int m) {
+    static void derivation(Set<Integer>[][] distMap, int[][] corridor, int[][] queries) {
         boolean changed = false;
-        long stopMod = m - 1;
+        boolean[] colChanged = null;
+        boolean[] colComplete = new boolean[queries.length];
         do {
             changed = false;
+            colChanged = new boolean[queries.length];
             for (int i = 0; i < corridor.length; i++) {
                 int[] distPair = corridor[i];
                 int from = distPair[0];
                 int to = distPair[1];
 
-                Set<Long> originSet = distMap.get(from - 1);
-                if (originSet.size() == 0) continue;
-
-                Set<Long> set = distMap.get(to - 1);
-                Iterator<Long> itr = originSet.iterator();
-                while (itr.hasNext()) {
-                    long dist = itr.next();
-                    dist = dist + distPair[2];
-                    dist = dist % m;
-                    if (dist < 0) dist += m;
-                    boolean add = set.add(dist);
-                    changed = changed || add;
+                for (int j = 0; j < queries.length; j++) {
+                    if (colComplete[j]) continue;
+                    if (distMap[j][from - 1] == null
+                        || distMap[j][from - 1].size() == 0) continue;
+                    
+                    if (distMap[j][to - 1] == null) {
+                        distMap[j][to - 1] = new HashSet<Integer>();
+                    }
+                    Iterator<Integer> itr = distMap[j][from - 1].iterator();
+                    while (itr.hasNext()) {
+                        int dist = itr.next();
+                        dist = dist + distPair[2];
+                        dist = dist % queries[j][2];
+                        if (dist < 0) dist += queries[j][2];
+                        boolean add = distMap[j][to - 1].add(dist);
+                        colChanged[j] = colChanged[j] || add;
+                        changed = changed || add;
+                    }
+                    
                 }
             }
             
-            Set<Long> set = distMap.get(toIndex - 1);
-            if (set.contains(stopMod)) {
-                break;
+            for (int j = 0; j < queries.length; j++) {
+                if (colComplete[j]) continue;
+                if (distMap[j][queries[j][1] - 1] != null
+                		&& distMap[j][queries[j][1] - 1].contains(queries[j][2] - 1)) {
+                    colComplete[j] = true;
+                    continue;
+                }
+                if (!colChanged[j]) {
+                    colComplete[j] = true;
+                    continue;
+                }
             }
 
         } while (changed);
     }
 
-    static int calculateMaxMod(int[][] corridor, int max, int from, int to, int m) {
-        List<Set<Long>> distMap = new ArrayList<>();
-        for (int i = 0; i < max; i++) {
-            distMap.add(new HashSet<Long>());
+    @SuppressWarnings("unchecked")
+    static int[] calculateMaxMod(int[][] corridor, int max, int[][] queries) {
+        Set<Integer>[][] distMap = new Set[queries.length][];
+        for (int j = 0; j < queries.length; j++) {
+            distMap[j] = new Set[max];
+            int from = queries[j][0];
+            Set<Integer> set = new HashSet<>();
+            set.add(0);
+            distMap[j][from - 1] = set;
         }
-        Set<Long> selfDist = distMap.get(from - 1);
-        selfDist.add(0l);
 
-        derivation(distMap, corridor, to, m);
+        derivation(distMap, corridor, queries);
 
-        int maxMod = 0;
-        Set<Long> distSet = distMap.get(to - 1);
-        Iterator<Long> itr = distSet.iterator();
-        while(itr.hasNext()) {
-            int mod = (int) (itr.next() % m);
-            mod = mod < 0 ? mod + m : mod;
-            if (mod > maxMod) maxMod = mod;
+        int[] maxMods = new int[queries.length];
+        for (int j = 0; j < distMap.length; j++) {
+            Iterator<Integer> itr = distMap[j][queries[j][1] - 1].iterator();
+            while (itr.hasNext()) {
+                int mod = itr.next() % queries[j][2];
+                mod = mod < 0 ? mod + queries[j][2] : mod;
+                if (mod > maxMods[j]) maxMods[j] = mod;
+            }
         }
-        return maxMod;
+
+        return maxMods;
     }
 
 
@@ -91,20 +116,12 @@ public class Solution {
             newCorrdor[i * 2 + 1][2] = -dist;
         }
 
-        int[] result = new int[queries.length];
-        for (int i = 0; i < queries.length; i++) {
-            int from = queries[i][0];
-            int to = queries[i][1];
-            int m = queries[i][2];
-            result[i] = calculateMaxMod(newCorrdor, max, from, to, m);
-        }
-        return result;
+        return calculateMaxMod(newCorrdor, max, queries);
     }
 
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) throws IOException {
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(System.getenv("OUTPUT_PATH")));
 
         int n = scanner.nextInt();
         scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])*");
@@ -139,18 +156,11 @@ public class Solution {
         int[] result = longestModPath(corridor, queries);
 
         for (int resultItr = 0; resultItr < result.length; resultItr++) {
-            bufferedWriter.write(String.valueOf(result[resultItr]));
-
-            if (resultItr != result.length - 1) {
-                bufferedWriter.write("\n");
-            }
+            System.out.println(result[resultItr]);
         }
-
-        bufferedWriter.newLine();
-
-        bufferedWriter.close();
 
         scanner.close();
     }
 }
+
 
